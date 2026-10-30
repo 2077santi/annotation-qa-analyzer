@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annotation QA Analyzer</title>
+<meta name="description" content="Weekly QA dashboard for a content-safety annotation program: agreement, drift, bias and guideline ambiguity.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --border: #e3e6eb; --text: #14181f; --muted: #5d6675;
+  --accent: #2f5bea; --accent-soft: #e8eefe; --good: #16804a; --warn: #b26a00; --bad: #c62f2f;
+  --chip-critical: #fde8e8; --chip-high: #fff1dc; --chip-medium: #fdf7d3;
+  --series-1: #2f5bea; --series-2: #e0663a; --series-3: #1a9e77; --series-4: #9c5bd1; --series-5: #8a94a6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1218; --surface: #171b23; --border: #2a303b; --text: #e9edf3; --muted: #9aa4b4;
+    --accent: #7a9cff; --accent-soft: #1d2640; --good: #4cc68a; --warn: #f0a640; --bad: #ff6b6b;
+    --chip-critical: #3d1d1f; --chip-high: #3a2b16; --chip-medium: #35321a;
+    --series-1: #7a9cff; --series-2: #ff8a5c; --series-3: #4cc6a0; --series-4: #c493f0; --series-5: #7d8799;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1218; --surface: #171b23; --border: #2a303b; --text: #e9edf3; --muted: #9aa4b4;
+  --accent: #7a9cff; --accent-soft: #1d2640; --good: #4cc68a; --warn: #f0a640; --bad: #ff6b6b;
+  --chip-critical: #3d1d1f; --chip-high: #3a2b16; --chip-medium: #35321a;
+  --series-1: #7a9cff; --series-2: #ff8a5c; --series-3: #4cc6a0; --series-4: #c493f0; --series-5: #7d8799;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.55 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 64px; }
+header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
+.eyebrow { font: 500 12px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+h1 { font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.02em; }
+.sub { color: var(--muted); margin-top: 6px; max-width: 640px; }
+.links a { color: var(--accent); text-decoration: none; font-weight: 500; margin-left: 16px; }
+.links a:first-child { margin-left: 0; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+.kpi .label { color: var(--muted); font-size: 13px; }
+.kpi .value { font-size: 30px; font-weight: 700; letter-spacing: -.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.kpi .note { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.kpi .value.good { color: var(--good); } .kpi .value.bad { color: var(--bad); }
+.grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; grid-column: span 12; min-width: 0; }
+.card.half { grid-column: span 6; }
+@media (max-width: 860px) { .card.half { grid-column: span 12; } }
+.card h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.card .hint { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+.chart { position: relative; height: 280px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+.chip { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.chip.critical { background: var(--chip-critical); color: var(--bad); }
+.chip.high { background: var(--chip-high); color: var(--warn); }
+.chip.medium { background: var(--chip-medium); color: var(--warn); }
+.mono { font-family: "JetBrains Mono", monospace; font-size: 12.5px; }
+.flag { color: var(--bad); font-weight: 600; }
+footer { color: var(--muted); font-size: 13px; margin-top: 28px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <div class="eyebrow">AI data quality · weekly QA</div>
+      <h1>Annotation QA Analyzer</h1>
+      <p class="sub" id="scope"></p>
+    </div>
+    <nav class="links"><a href="https://github.com/2077santi/annotation-qa-analyzer">Source</a><a href="https://github.com/2077santi/annotation-qa-analyzer/blob/main/reports/weekly_qa_report.md">Weekly report</a></nav>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid">
+    <div class="card">
+      <h2>Findings and actions</h2>
+      <p class="hint">Sorted by severity. Every finding comes with the action a QA lead would take this week.</p>
+      <div class="table-wrap"><table id="findings"></table></div>
+    </div>
+    <div class="card half">
+      <h2>Root causes of disagreement</h2>
+      <p class="hint">Each label that disagrees with the other raters, assigned to one cause.</p>
+      <div class="chart"><canvas id="pareto"></canvas></div>
+    </div>
+    <div class="card half">
+      <h2>Agreement by content type</h2>
+      <p class="hint">Fleiss' kappa. Low agreement across the whole team points to the guideline, not the people.</p>
+      <div class="chart"><canvas id="edge"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Weekly agreement: team vs drifting annotators</h2>
+      <p class="hint">Share of labels matching the other raters' majority. Drift starts in week 5.</p>
+      <div class="chart"><canvas id="trend"></canvas></div>
+    </div>
+    <div class="card">
+      <h2>Annotator scorecard</h2>
+      <p class="hint">Lowest agreement first.</p>
+      <div class="table-wrap"><table id="scorecard"></table></div>
+    </div>
+  </section>
+  <footer>Synthetic data generated for this portfolio. No client data. Built with Python, DuckDB SQL and Chart.js.</footer>
+</main>
+<script>
+const DATA = /*__DATA__*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const pct = (x, d = 1) => (x * 100).toFixed(d) + "%";
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const s = DATA.summary;
+document.getElementById("scope").textContent =
+  `Content-safety labeling program: ${s.items.toLocaleString("en-US")} posts, ${s.labels.toLocaleString("en-US")} labels, ${s.annotators} annotators, ${s.gold_items} gold items, 8 weeks.`;
+
+const kpis = [
+  ["Fleiss' kappa", s.fleiss_kappa.toFixed(2), `${s.kappa_band} agreement`, ""],
+  ["Delivered label accuracy", pct(s.label_quality_now), "majority vote vs expert gold", ""],
+  ["Projected after actions", pct(s.label_quality_after_fixes), `+${((s.label_quality_after_fixes - s.label_quality_now) * 100).toFixed(1)} pp`, "good"],
+  ["Findings", s.findings, `${s.critical_findings} critical safety gap`, s.critical_findings ? "bad" : ""],
+];
+document.getElementById("kpis").innerHTML = kpis.map(([l, v, n, c]) =>
+  `<div class="kpi"><div class="label">${l}</div><div class="value ${c}">${v}</div><div class="note">${n}</div></div>`).join("");
+
+document.getElementById("findings").innerHTML =
+  "<tr><th>Severity</th><th>Type</th><th>Subject</th><th>Evidence</th><th>Action</th></tr>" +
+  DATA.findings.map(f => `<tr><td><span class="chip ${f.severity}">${f.severity}</span></td><td class="mono">${esc(f.kind)}</td>
+    <td class="mono">${esc(f.subject)}</td><td>${esc(f.evidence)}</td><td>${esc(f.action)}</td></tr>`).join("");
+
+const flagged = new Set(DATA.findings.filter(f => f.kind !== "GUIDELINE_AMBIGUITY").map(f => f.subject));
+document.getElementById("scorecard").innerHTML =
+  "<tr><th>Annotator</th><th>Site</th><th class='num'>Labels</th><th class='num'>Agreement</th><th class='num'>Gold accuracy</th><th class='num'>Avg handle time</th><th>Flags</th></tr>" +
+  DATA.scorecard.map(r => `<tr><td class="mono">${r.annotator_id}</td><td>${r.site}</td><td class="num">${r.labels_scored}</td>
+    <td class="num">${pct(r.agreement_rate)}</td><td class="num">${pct(r.gold_accuracy)}</td><td class="num">${r.avg_handle_time_sec.toFixed(0)}s</td>
+    <td class="${r.flags ? "flag" : ""}">${esc(r.flags) || "-"}</td></tr>`).join("");
+
+function draw() {
+  Chart.defaults.locale = "en-US";
+  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.color = css("--muted");
+  Chart.defaults.borderColor = css("--border");
+  const series = [1, 2, 3, 4, 5].map(i => css(`--series-${i}`));
+
+  new Chart(document.getElementById("pareto"), {
+    type: "bar",
+    data: { labels: DATA.pareto.map(r => r.root_cause), datasets: [{ data: DATA.pareto.map(r => r.share * 100), backgroundColor: series[0], borderRadius: 4 }] },
+    options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => `${c.raw.toFixed(1)}% (${DATA.pareto[c.dataIndex].disagreements} labels)` } } },
+      scales: { x: { ticks: { callback: v => v + "%" } }, y: { grid: { display: false } } } },
+  });
+
+  const edges = [...DATA.edge_kappa].sort((a, b) => b.kappa - a.kappa);
+  const plain = DATA.edge_kappa.find(r => r.edge_case.startsWith("none")).kappa;
+  new Chart(document.getElementById("edge"), {
+    type: "bar",
+    data: { labels: edges.map(r => r.edge_case.replace("_", " ")), datasets: [{ data: edges.map(r => r.kappa),
+      backgroundColor: edges.map(r => plain - r.kappa >= 0.2 ? css("--bad") : series[0]), borderRadius: 4 }] },
+    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 1 }, x: { grid: { display: false } } } },
+  });
+
+  const weeks = DATA.team_weekly.map(r => "W" + r.week);
+  const people = DATA.findings.filter(f => f.kind === "DRIFT").map(f => f.subject).sort();
+  new Chart(document.getElementById("trend"), {
+    type: "line",
+    data: { labels: weeks, datasets: [
+      { label: "Team", data: DATA.team_weekly.map(r => r.agreement_rate * 100), borderColor: css("--text"), borderWidth: 3, pointRadius: 0, tension: .3 },
+      ...people.map((a, i) => ({ label: a, data: DATA.annotator_weekly.filter(r => r.annotator_id === a).map(r => r.agreement_rate * 100),
+        borderColor: series[(i + 1) % series.length], borderWidth: 2, pointRadius: 2, tension: .3 })),
+    ] },
+    options: { maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+      plugins: { tooltip: { callbacks: { label: c => `${c.dataset.label}: ${c.raw.toFixed(1)}%` } } },
+      scales: { y: { min: 60, max: 100, ticks: { callback: v => v + "%" } }, x: { grid: { display: false } } } },
+  });
+}
+if (window.Chart) draw();
+else document.querySelectorAll(".chart").forEach(el => el.innerHTML = "<p class='hint'>Charts need an internet connection (Chart.js CDN).</p>");
+</script>
+</body>
+</html>
