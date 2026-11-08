@@ -6,7 +6,7 @@
 <title>Annotation QA Analyzer</title>
 <meta name="description" content="Weekly QA dashboard for a content-safety annotation program: agreement, drift, bias and guideline ambiguity.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root {
@@ -30,10 +30,10 @@
   --series-1: #7a9cff; --series-2: #ff8a5c; --series-3: #4cc6a0; --series-4: #c493f0; --series-5: #7d8799;
 }
 * { box-sizing: border-box; margin: 0; }
-body { background: var(--bg); color: var(--text); font: 15px/1.55 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--text); font: 15px/1.55 Libre Franklin, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
 main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 64px; }
 header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; }
-.eyebrow { font: 500 12px/1 "JetBrains Mono", monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+.eyebrow { font: 500 12px/1 ui-monospace, Menlo, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
 h1 { font-size: clamp(24px, 4vw, 32px); line-height: 1.15; letter-spacing: -.02em; }
 .sub { color: var(--muted); margin-top: 6px; max-width: 640px; }
 .links a { color: var(--accent); text-decoration: none; font-weight: 500; margin-left: 16px; }
@@ -61,9 +61,26 @@ tr:last-child td { border-bottom: 0; }
 .chip.critical { background: var(--chip-critical); color: var(--bad); }
 .chip.high { background: var(--chip-high); color: var(--warn); }
 .chip.medium { background: var(--chip-medium); color: var(--warn); }
-.mono { font-family: "JetBrains Mono", monospace; font-size: 12.5px; }
+.mono { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; }
 .flag { color: var(--bad); font-weight: 600; }
 footer { color: var(--muted); font-size: 13px; margin-top: 28px; }
+
+/* Site style */
+:root{--bg:#fff;--surface:#fff;--border:#D6D9D3;--text:#1B1E1B;--muted:#60665F;--accent:#27634B;--accent-soft:#E4EEE8;--good:#1F6B4A;--warn:#8A5A00;--bad:#9C2F27;--series-1:#27634B;--series-2:#B8642A;--series-3:#4C6E91;--series-4:#7B6A58;--series-5:#9AA09A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141714;--surface:#141714;--border:#333933;--text:#E7EAE5;--muted:#9CA39B;--accent:#7CC3A2;--accent-soft:#23342B;--good:#7CC3A2;--warn:#E0B060;--bad:#EE9A92;--series-1:#7CC3A2;--series-2:#E0A070;--series-3:#8FB0D0;--series-4:#BBA992;--series-5:#7D8580}}
+:root[data-theme="dark"]{--bg:#141714;--surface:#141714;--border:#333933;--text:#E7EAE5;--muted:#9CA39B;--accent:#7CC3A2;--accent-soft:#23342B;--good:#7CC3A2;--warn:#E0B060;--bad:#EE9A92;--series-1:#7CC3A2;--series-2:#E0A070;--series-3:#8FB0D0;--series-4:#BBA992;--series-5:#7D8580}
+body{font:14px/1.5 "Libre Franklin","Helvetica Neue",Arial,sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:1080px}
+.eyebrow{display:none}
+h1{font-size:24px;letter-spacing:0}
+.kpis{gap:0;border-block:1px solid var(--border);margin-bottom:24px}
+.kpi{background:none;border:0;border-radius:0;padding:10px 16px 10px 0}
+.kpi .value{font-size:23px;letter-spacing:0}
+.grid{gap:28px 32px}
+.card{background:none;border:0;border-radius:0;padding:0 0 4px}
+.card h2{font-size:16px;font-weight:700}
+th{text-transform:none;letter-spacing:0;border-bottom-color:var(--muted)}
+.chip{background:none!important;padding:0;border-radius:0}
 </style>
 </head>
 <body>
@@ -141,7 +158,7 @@ document.getElementById("scorecard").innerHTML =
 
 function draw() {
   Chart.defaults.locale = "en-US";
-  Chart.defaults.font.family = "Inter, system-ui, sans-serif";
+  Chart.defaults.font.family = "Libre Franklin, system-ui, sans-serif";
   Chart.defaults.color = css("--muted");
   Chart.defaults.borderColor = css("--border");
   const series = [1, 2, 3, 4, 5].map(i => css(`--series-${i}`));

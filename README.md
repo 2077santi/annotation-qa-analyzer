@@ -1,14 +1,12 @@
 # Annotation QA Analyzer
 
-**Finds out *why* annotators disagree, so a QA lead knows whether to retrain a person or fix the guideline.**
+Finds out why annotators disagree, so a QA lead knows whether to retrain a person or fix the guideline.
 
 A weekly quality pipeline for an AI training-data program: inter-annotator agreement, annotator drift, systematic bias, guideline ambiguity and a root-cause Pareto, turned into a report with one action per finding.
 
-**[Live dashboard →](https://2077santi.github.io/annotation-qa-analyzer/)** · [Weekly QA report](reports/weekly_qa_report.md) · [Spec & acceptance criteria](SPEC.md)
+[Live dashboard](https://2077santi.github.io/annotation-qa-analyzer/) · [Weekly QA report](reports/weekly_qa_report.md) · [Spec & acceptance criteria](SPEC.md)
 
-![Dashboard](docs/screenshot.png)
-
----
+![Dashboard](docs/screenshot.jpg)
 
 ## The problem
 
@@ -38,7 +36,7 @@ The [generator](qa/generate_data.py) plants realistic problems. The pipeline nev
 | 🟠 | **"News reporting" and "sarcasm" rules are ambiguous** | Fleiss' κ 0.10-0.12 vs 0.77 on plain content, *across all annotators* | Escalate to policy: decision rule + worked examples |
 | 🟡 | **A03 over-flags harassment** | Labels 23% of `SAFE` posts as `HARASSMENT` (team: 4%) | Calibration on the SAFE/HARASSMENT boundary |
 
-**Impact:** delivered label accuracy vs gold goes from **95.7% → 99.3% (projected)** after removing the flagged annotators' votes and sending ambiguous edge cases to expert adjudication. The root-cause Pareto shows **43% of all disagreement comes from two guideline gaps**, which is the cheapest fix in the program.
+**Impact:** delivered label accuracy vs gold goes from **95.7% to 99.3% (projected)** after removing the flagged annotators' votes and sending ambiguous edge cases to expert adjudication. The root-cause Pareto shows **43% of all disagreement comes from two guideline gaps**, which is the cheapest fix in the program.
 
 ## How it works
 
